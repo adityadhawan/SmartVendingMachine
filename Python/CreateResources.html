@@ -1,0 +1,37 @@
+<html>
+
+<head>
+<title>Vending Machine Simulator</title>
+<script type="text/javascript"
+	src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js "></script>
+
+<script>
+	var s = "#create"
+	function CreateResources() {
+		$.ajax({
+			url : "http://m2mdemo.cloudapp.net:5998/?create?"+5,
+			type : "post",
+			async : true,
+			data : s,
+			dataType : "text"
+		});
+	}
+</script>
+
+</head>
+<body>
+	<h3>Create Resources</h3>
+	<table>
+		<tr>
+			<td>Create 10 Vending Machine : </td>
+			
+		
+		
+			<td colspan="2"><input type="button" value="Create" id="Create"
+				onClick="CreateResources()" /></td>
+		</tr>
+	</table>
+
+
+</body>
+</html>

@@ -1,0 +1,51 @@
+<html>
+
+<head>
+<title>Vending Machine Simulator</title>
+<script type="text/javascript"
+	src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js "></script>
+
+<script>
+	var s = "#update"
+	function stockReplenishment() {
+		var resource_ids = document.getElementById("resources").value;
+		s = s + "#" + resource_ids;
+		$.ajax({
+			url : "http://m2mdemo.cloudapp.net:5998/?update?"+resource_ids,
+			type : "post",
+			async : true,
+			data : s,
+			dataType : "text"
+		});
+	}
+</script>
+
+</head>
+<body>
+	<h3>Stock Replenishment</h3>
+	<table>
+		<tr>
+			<td>Enter Resource Id's for Stock Replenishment:</td>
+			<td><input type="text" name="resources"
+				id="resources" /></td>
+		</tr>
+		<tr>
+			<td colspan="2"><input type="button" value="Stock Replenishment"
+				id="Update" onClick="stockReplenishment()" /></td>
+		</tr>
+		<tr>
+			<td></td>
+		</tr>
+		<tr>
+			<td>Note: If text box is empty then stock of all the resources
+				will be updated.</td>
+		</tr>
+		<tr>
+			<td>Note 2: for updating stock of multiple resources, enter
+				resource ids comma seperated</td>
+		</tr>
+	</table>
+
+
+</body>
+</html>

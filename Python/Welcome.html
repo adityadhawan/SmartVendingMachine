@@ -1,0 +1,238 @@
+<html>
+
+<head>
+<title>Vending Machine Simulator</title>
+<style type="text/css">
+
+.container{
+background:#F6E6F7;
+border:2px solid;
+border-radius:25px;
+box-shadow: 10px 10px 5px #888888;
+padding-left:50px;
+padding-right:50px;
+width:400px;
+height:400px;
+}
+.stylishButton{
+width:80px;
+height:30px;
+font-weight:bold;
+text-align:center;
+background: #fefefe;
+box-shadow: 3px 3px 8px #0e0e0e;
+border: solid #0e0e0e 2px;
+border-radius: 5px;
+}
+
+.stylishButtonStock{
+width:200px;
+height:30px;
+font-weight:bold;
+text-align:center;
+background: #fefefe;
+box-shadow: 3px 3px 8px #0e0e0e;
+border: solid #0e0e0e 2px;
+border-radius: 5px;
+}
+
+.h1{
+padding-bottom:10px;
+}
+
+.h2{
+padding-bottom:10px;
+}
+
+</style>
+
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js "></script>
+
+<script>
+var stringArray;
+var itemArray;
+var cashJSONString;
+var fileString;
+
+function loadValues() {
+    $("#container").fadeIn(2000);
+	document.getElementById("container").style.display="block";
+	document.getElementById("activityList").selectedIndex = 0;
+	hideOnLoad();
+}
+
+function hideOnLoad() {
+	$("#CreateResource").hide();
+	$("#StockReplishment").hide();
+	$("#Dispensing").hide();
+	$("#Alert").hide();
+
+}
+
+function showCreateResourceDiv() {
+	hideOnLoad();
+	$("#CreateResource").fadeIn(1000);
+}
+
+function showStockReplishmentDiv() {
+	hideOnLoad();
+	$("#StockReplishment").fadeIn(1000);
+}
+
+function showDispensingDiv() {
+	hideOnLoad();
+	$("#Dispensing").fadeIn(1000);
+        if(document.getElementById("startDisp").disabled == true){
+            document.getElementById("stopDisp").disabled = false;
+        }
+        else{
+            document.getElementById("startDisp").disabled = false;
+			document.getElementById("stopDisp").disabled = true;
+        }
+}
+
+function showAlertDiv() {
+	hideOnLoad();
+	$("#Alert").fadeIn(1000);
+		if(document.getElementById("startAlert").disabled == true){
+            document.getElementById("stopAlert").disabled = false;
+        }
+        else{
+            document.getElementById("startAlert").disabled = false;
+			document.getElementById("stopAlert").disabled = true;
+        }
+}
+
+
+function selectActivity() {
+	var selIndex = document.getElementById("activityList").selectedIndex;
+	if (selIndex == '0') {
+		hideOnLoad();
+	} else if (selIndex == '1') {
+		showCreateResourceDiv();
+	} else if (selIndex == '2') {
+		showStockReplishmentDiv();
+	} else if (selIndex == '3') {
+		showDispensingDiv();
+	} else if (selIndex == '4') {
+		showAlertDiv();
+	}
+}
+
+	function CreateResources() {
+          alert("Vending Machine Creation Started");
+		$.ajax({
+			url : "http://m2mdemo.cloudapp.net:5998/?create?"+5,
+			type : "post",
+			async : true,
+			dataType : "text"
+		}).success (function(response) { alert(response); })
+                  .error   (function()     { alert("Error")   ; })
+                ;
+	}
+
+	function stockReplenishment() {
+            alert("Stock Replishment Started");
+		$.ajax({
+			url : "http://m2mdemo.cloudapp.net:5998/?update?",
+			type : "post",
+			async : true,
+			dataType : "text"
+		}).success (function(response) { alert(response); })
+                  .error   (function()     { alert("Error")   ; })
+                ;
+
+	}
+
+	function startDispensing() {
+		$.ajax({
+			url : "http://m2mdemo.cloudapp.net:5998/?startDispensing",
+			type : "post",
+			async : true,
+			dataType : "text"
+		}).success (function(response) { alert(response); })
+                  .error   (function()     { alert("Error")   ; })
+                ;
+		document.getElementById("startDisp").disabled = true;
+		document.getElementById("stopDisp").disabled = false;
+	}
+	
+	function stopDispensing() {
+		$.ajax({
+			url : "http://m2mdemo.cloudapp.net:5998/?stopDispensing",
+			type : "post",
+			async : true,
+			dataType : "text"
+		}).success (function(response) { alert(response); })
+                  .error   (function()     { alert("Error")   ; })
+                ;
+		document.getElementById("startDisp").disabled = false;
+		document.getElementById("stopDisp").disabled = true;
+
+	}
+
+	function startAlert() {
+		$.ajax({
+			url : "http://m2mdemo.cloudapp.net:5998/?startAlert",
+			type : "post",
+			async : true,
+			dataType : "text"
+		}).success (function(response) { alert(response); })
+                  .error   (function()     { alert("Error")   ; })
+                ;
+		document.getElementById("startAlert").disabled = true;
+		document.getElementById("stopAlert").disabled = false;
+
+	}
+
+	function stopAlert() {
+		$.ajax({
+			url : "http://m2mdemo.cloudapp.net:5998/?stopAlert",
+			type : "post",
+			async : true,
+			dataType : "text"
+		}).success (function(response) { alert(response); })
+                  .error   (function()     { alert("Error")   ; })
+                ;
+		document.getElementById("startAlert").disabled = false;
+		document.getElementById("stopAlert").disabled = true;
+
+	}
+</script>
+
+</head>
+
+<body onload="loadValues()" align="center">
+<div class="container" id="container" style="display:none" align="center">
+        <h1><font color="red">Verizon</font></h1>
+	<h2>Multiple Vending Machine Automation</h2>
+	<div id="activity">Select Activity:&nbsp;
+		<select id="activityList" onchange="selectActivity()">
+			<option value="0" selected="selected">--Select Activity--</option>
+			<option value="1">Create Vending Machines</option>
+			<option value="2">Stock Replenishment</option>
+			<option value="3">Dispensing</option>
+			<option value="4">Fault Generation</option>
+		</select>
+	</div>
+	<div id="CreateResource"><br/>
+			<p> &nbsp;&nbsp;<b>Create 5 Vending Machines</b></p>
+			&nbsp;&nbsp;&nbsp;
+			<input type="button" value="Create" class="stylishButton" onclick="CreateResources()"/>
+	</div>
+	<div id="StockReplishment"><br/><br/>
+		<input type="button" value="Stock Replishment" class="stylishButtonStock" onclick="stockReplenishment()"/>
+	</div>
+	<div id="Dispensing"><br/><br/>
+		<input type="button" value="Start" id="startDisp" class="stylishButton" onclick="startDispensing()"/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		<input type="button" value="Stop" id="stopDisp"class="stylishButton" onclick="stopDispensing()"/>
+	</div>
+	<div id="Alert"><br/><br/>
+		<input type="button" value="Start" id="startAlert" class="stylishButton" onclick="startAlert()"/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		<input type="button" value="Stop" id="stopAlert" class="stylishButton" onclick="stopAlert()"/>
+	</div>
+</div>
+</html>
+

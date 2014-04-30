@@ -1,0 +1,16 @@
+db.coupons.drop();
+db.vendingmachines.drop();
+db.transactions.drop();
+db.stockouthistories.drop();
+db.statushistories.drop();
+db.mockservicemgmtschemas.drop();
+db.inventories.drop();
+db.replenishmenthistories.drop();
+db.alerts.drop();
+db.items.drop();
+db.users.drop();
+db.alarmtypes.drop();
+db.vmstatuses.drop();
+db.inventorystatuses.drop();
+db.goals.drop();
+db.alertconfigs.drop();

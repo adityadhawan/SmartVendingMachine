@@ -1,0 +1,46 @@
+<html>
+
+<head>
+<title>Vending Machine Simulator</title>
+<script type="text/javascript"
+	src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js "></script>
+
+<script>
+	var s = "#startAlert"
+	function startAlert() {
+		$.ajax({
+			url : "http://m2mdemo.cloudapp.net:5998/?startAlert",
+			type : "post",
+			async : true,
+			data : s,
+			dataType : "text"
+		});
+	}
+	var s1 = "#stopAlert"
+	function stopAlert() {
+		$.ajax({
+			url : "http://m2mdemo.cloudapp.net:5998/?stopAlert",
+			type : "post",
+			async : true,
+			data : s1,
+			dataType : "text"
+		});
+	}
+</script>
+
+</head>
+<body>
+	<h3>Alert</h3>
+	<table>
+		<tr>
+			<td colspan="2"><input type="button" value="Start"
+				id="startAlert" onClick="startAlert()" /></td>
+			<td colspan="2"><input type="button" value="Stop"
+				id="stopAlert" onClick="stopAlert()" /></td>
+		</tr>
+
+	</table>
+
+
+</body>
+</html>

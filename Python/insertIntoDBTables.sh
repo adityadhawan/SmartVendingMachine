@@ -1,0 +1,1 @@
+mongo --host <IP Address> --port 27017 RSVM_DB insertIntoDBTables.js
