@@ -1,0 +1,219 @@
+/** Add css rules here for your application. */
+
+
+/** Example rules used by the template application (remove for your app) */
+h1 {
+  font-size: 2em;
+  font-weight: bold;
+  color: #777777;
+  margin: 40px 0px 70px;
+  text-align: center;
+}
+
+.seperator{
+	background-color:yellow;
+	border-right:2px solid black;
+	border-bottom:2px solid black;
+    margin-right:10px;
+	margin-bottom:10px;
+}
+
+.labelHeader{
+	font-family:Arial;
+	font-size:13px;
+	font-weight:bold;
+	font-style:normal;
+	text-decoration:none;
+	color:#333333;
+}
+
+.formLabelHeader{
+	font-family:Arial;
+	font-size:13px;
+	font-weight:bold;
+	font-style:normal;
+	text-decoration:none;
+	color:#333333;
+	text-align:left;
+}
+
+.tableHeading{
+	font-family:Arial;
+	font-size:14px;
+	font-weight:bold;
+	font-style:normal;
+	text-decoration:underline;
+	color:#333333;
+	text-align:center;
+}
+
+
+.buttonLabel{
+	font-family:Arial;
+	font-size:12px;
+	font-weight:bold;
+	font-style:normal;
+	text-decoration:none;
+	color:#333333;
+	width: 90px;
+	height: 35px;
+}
+
+.selectUserbuttonLabel{
+	font-family:Arial;
+	font-size:12px;
+	font-weight:bold;
+	font-style:normal;
+	text-decoration:none;
+	color:#333333;
+	width: 140px;
+	height: 35px;
+}
+
+.alertConfigTextBox{
+	width:150px;
+	height:20px;
+}
+
+.TopRight {
+   position:absolute;
+   right:13px;
+   top:3px;
+}
+
+
+.radioStyle{
+	text-align: right
+}
+
+
+.cellTableCell {
+  white-space: nowrap;
+}
+
+
+.box_round {
+  -webkit-border-radius: 22px;
+  border-radius: 22px;
+  -webkit-border-color:black;
+  background-clip: padding-box;
+}
+
+.box_shadow {
+  -webkit-box-shadow: 0px 0px 4px 0px #ffffff;
+          box-shadow: 0px 0px 4px 0px #ffffff;
+}
+
+.box_gradient {
+  background-color:white;
+  background-image: -webkit-gradient(linear, left top, left bottom, from(#eeeeee), to(#eeeeee));
+  background-image: -webkit-linear-gradient(top, #eeeeee, #eeeeee);
+  background-image: -moz-linear-gradient(top, #eeeeee, #eeeeee);
+  background-image: -o-linear-gradient(top, #eeeeee, #eeeeee);
+  background-image: linear-gradient(to bottom, #eeeeee, #eeeeee);
+}
+
+.box_rgba {
+  background-color: transparent;
+  background-color: rgba(180, 180, 144, 0.6);  
+}
+
+.tabHeading {
+	font-family:Arial;
+	font-size:13px;
+	font-weight:bold;
+	font-style:normal;
+	text-decoration:none;
+	color:#333333;
+	text-align:center;
+}
+
+.viewTabHeading {
+	font-family:Arial;
+	font-size:15px;
+	font-weight:bold;
+	font-style:normal;
+	text-decoration:none;
+	color:#333333;
+	text-align:center;
+}
+
+.clickableCellStyle {
+	text-decoration:underline;
+}
+
+/* CSS Header - Start*/
+.u4_container {
+    position:absolute;
+    left:5px;
+    top:1px;
+    width:1005px;
+    height:60px;
+}
+
+.u4_normal {
+    background-image: url('/images/u4_normal.jpg');
+}
+
+.u5 {
+    position:absolute;
+    left:2px;
+    top:22px;
+    width:1001px;
+    height:16px;
+    ;
+    ;
+    ;
+    font-family:Arial;
+    text-align:left;
+    word-wrap:break-word;
+}
+
+.u6_container {
+    position:absolute;
+    left:5px;
+    top:2px;
+    width:108px;
+    height:60px;
+}
+
+.u6_normal {
+    background-image: url('/images/u6_normal.jpg');
+}
+
+.u7 {
+    position:absolute;
+    left:2px;
+    top:22px;
+    width:104px;
+    height:16px;
+    ;
+    ;
+    ;
+    font-family:Arial;
+    text-align:left;
+    word-wrap:break-word;
+}
+
+.u8 {
+    position:absolute;
+    left:130px;
+    top:19px;
+    width:390px;
+    height:24px;
+    ;
+    ;
+    ;
+    font-family:Arial;
+    text-align:left;
+    word-wrap:break-word;
+}
+
+.gwt-TabLayoutPanelTab {
+    background-color: blue;
+}
+
+/* CSS Header - End*/
+.hiddenColumn{
+display:none;
+}

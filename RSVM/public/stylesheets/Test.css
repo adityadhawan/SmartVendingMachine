@@ -1,0 +1,81 @@
+/** Add css rules here for your application. */
+
+
+/** Example rules used by the template application (remove for your app) */
+h1 {
+  font-size: 2em;
+  font-weight: bold;
+  color: #777777;
+  margin: 40px 0px 70px;
+  text-align: center;
+}
+
+.back{
+	background-image: url("/javascripts/gwt/clean/images/u4_normal.png");
+	
+}
+
+.backCap{
+	background-image: url("/javascripts/gwt/clean/images/u11_normal.png");
+	background-color: white;
+ 	border: 0px;
+ 	border-color: white;
+ 	padding-bottom: 10px;
+ 	padding-left: 25;
+ 	padding-right: 20 px;
+ 	padding-top: 1px;
+ 	margin-right: 5px;
+ 	margin-left: 5 px;
+	text-align:left;
+	width: 115px;
+	height: 40px;   
+ 	text-align: center;
+}
+
+.chart{
+	width: 765px;
+	height: 100px; 
+	text-align: center;
+}
+.vertical3{
+ 	padding-left: 10px;
+ 	padding-right: 10px;
+}
+.horizontal3{
+	padding: 5px;	
+}
+
+.horizontal2{
+	padding-left: 25px;
+}
+
+.submitButton{
+	text-align: right;
+}
+
+.dropdown{
+	width: 200px;
+}
+
+.sendButton {
+  display: block;
+  font-size: 16pt;
+}
+
+/** Most GWT widgets already have a style name defined */
+.gwt-DialogBox {
+  width: 400px;
+}
+
+.dialogVPanel {
+  margin: 5px;
+}
+
+.serverResponseLabelError {
+  color: red;
+}
+
+/** Set ids using widget.getElement().setId("idOfElement") */
+#closeButton {
+  margin: 15px 6px 6px;
+}
