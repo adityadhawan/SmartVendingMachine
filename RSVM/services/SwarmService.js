@@ -1,4 +1,4 @@
- 	var request  = require('../node_modules/bugswarm-prt/node_modules/superagent'),
+ 	 var request  = require('../node_modules/bugswarm-prt/node_modules/superagent'),
      mongoose = require('mongoose'),
      VendingMachine = mongoose.model('VendingMachine'),
      Transaction = mongoose.model('Transaction'),
@@ -23,33 +23,28 @@
      swarmservice = require('./SwarmService'),
      ticketserviceMgmt = require('../services/TicketServiceMgmt')
      
+var logger= require('./../resource/logger.js');
+var log=logger.LOG;
+
 module.exports.swarmMessageControler = function(message)
 {
- 		
-	 if(message != null){
-			
-		 console.log("######### swarmMessageControler call ###########");
-		 console.log("Message:::   "+JSON.stringify(message.payload));
-		 
+ 	 if(message != null){
+		 log.info("######### swarmMessageControler call ###########");
+		 log.info("Message:::   "+JSON.stringify(message.payload));
 		 if('Units_Replenished' in message.payload && message !=null  )
 			 {
-				 console.log("Products Got");
+				 log.info("Products Got");
 				 saveAndUpdateInventory(message);
-			   
 			 }
 		 else if('Sale_Amount' in message.payload || 'Coupon_Code'in message.payload)
 			{
-			 
 			 	saveVMDespensingDetails(message);
 			}
 		 else if('Error_Type' in message.payload)
 			{
-			
 			 swarmservice.saveAlert(message,message.payload.Error_Type);
-			
 			}
 	}
-	 
 	 };
 	 
    /**
@@ -59,37 +54,44 @@ module.exports.swarmMessageControler = function(message)
 	 module.exports.isResourceNew = function(resourceId,statusType){
 		 if(resourceId.length > 0 && statusType.length > 0){
 				 VendingMachine.find({resourceid:resourceId},function(err, VMDetails){
-					 if(err) console.log("Error in isResourceNew "+err);
+					 try{
+					 if(err) {
+						 log.info("Error in isResourceNew "+err);
+						 };
 				
 					 if(VMDetails.length == 0)
 					  {  
-						 console.log("New Vending Machine Got  "+resourceId );
+						 log.info("New Vending Machine Got  "+resourceId );
 						 getAndSaveResourceDetails(resourceId,statusType);
-					  }	 
+					  }	
+					 }catch(Exception){
+						 log.error("There is problem in Method: isResourceNew() "+Exception);
+					 }
+				 
 		 });
-	 }else{console.log("resourceId or statusType is not available ")}
-	 
- }
+	 }else{
+		 log.info("resourceId or statusType is not available ");
+		 }
+		 
+ };
  
  
  
 var getAndSaveResourceDetails = function(resourceId,statusType)
 {
-	var vmDetails  
-	var location
-	var region
-	var vlatitude
-	var vlongitude
-	//console.log("inside getAndSaveResourceDetails  "+resourceId);
+	var vmDetails;
+	var location;
+	var region;
+	var vlatitude;
+	var vlongitude;
+	
 	    request
 	        .get(config.resourceinfourl+resourceId)
 	        .set(config.header)
-	        .end(function(res) {	       
-	        	//console.log("res     "+JSON.parse(res.header));
-	            var vmDetails = JSON.parse(res.text);
-	           // console.log("VmDetails:::::     "+JSON.stringify(vmDetails));
-	           
-	          if(vmDetails.position != undefined ){
+	        .end(function(res) {
+	        try{
+	        	var vmDetails = JSON.parse(res.text);
+	            if(vmDetails.position != undefined ){
 	            	var locreg = (vmDetails.name).split('_');
 	            	
 	              if(vmDetails.position == undefined)
@@ -116,8 +118,11 @@ var getAndSaveResourceDetails = function(resourceId,statusType)
 		        	 InventoryStatus_time: Date.now()
 		        	 
 	       	     })
-	       		     .save( function( err, VendingMachine ){
-	       		       if (err) console.log("Error in getAndSaveResourceDetails "+err);
+	       		     .save( function( err, VendingMachine){
+	       		    	 try{
+	       		     if(err){
+	       		    	   log.info("Error in getAndSaveResourceDetails "+err);
+	       		    	   }
 	       		     
 	       		       //This is used for Vendingin Machine with Items.
 	       		    
@@ -134,59 +139,56 @@ var getAndSaveResourceDetails = function(resourceId,statusType)
 			        	 items:      ""   
 			        	 
 		       	     }).save( function( err, VendingMachine ){
-		       		       if (err) console.log("Error in getAndSaveResourceDetails "+err);
+		       	    	 try{
+		       		       if (err){
+		       		    	   log.info("Error in getAndSaveResourceDetails "+err);
+		       		       }
+		       		    	   
+		       	    	 }catch(Exception){
+	       		    		 log.error("There is problem in Method: getAndSaveResourceDetails() new VendingMachineDetail "+Exception);
+	       		    	 }
 		       	     });
+	       		    	 }catch(Exception){
+	       		    		 log.error("There is problem in Method: getAndSaveResourceDetails() new VendingMachine "+Exception);
+	       		    	 }
 	       	     }); 
 	            
 	        }
 	           else
         	   {
-                  //console.log('Resource location is    '+locreg);
+                  //log.info('Resource location is    '+locreg);
         	   }
+	        }catch(Exception){
+	        	 log.error("There is problem in Method: getAndSaveResourceDetails() "+Exception);
+	        }
 	        });
+	        
 	};
 
 
 
-
-/*var updateVMDetails = function(message)
-{
-	var objectId;
-    console.log(" inside update VMDetails  ");
-    VendingMachine.getMachine(message.payload.Resource_ID, function(err, data) {
-		if (err)
-			console.log("Error to find object id from Vending Machine" + err);
-	         objectid = data[0]._id
-		
-	         VendingMachine.update({_id : objectid}, {$set : {swarmid : message.payload.Swarm_ID,
-	        	 latitude : message.payload.Latitude,longitude : message.payload.Longitude,longitude : message.payload.Longitude,
-	        	 region : message.payload.Region,name : message.payload.VendingMachineName,location : message.payload.Location}
-	
-	}, function(err, numberAffected) {
-		if (err)
-			console.log("Error in update updateVMDetails" + err);
-		    console.log("numberAffected in updateVMDetails:::" + numberAffected);
-	 });
-	});
-	};*/
 
 /**
  * Transaction details persited
  */
 var saveVMDespensingDetails  =function(message)
 {
-	console.log("inside saveVMDespensingDetails()" );
-	var machine
+	log.info("inside saveVMDespensingDetails()" );
+	var machine;
   if(message != null){
 		 VendingMachine.getMachine(message.payload.Resource_ID, function(err, machine) {
-			 Vmachine = machine
+			 try{
+			 Vmachine = machine;
 			 Item.getItemID(message.payload.Product_Name, function(err, itemDtls) {
-				  
+				try{
 				if (err)
-					console.error("Error to find object id from Vending Machine In saveVMDespensingDetails" + err);
+					log.error.error("Error to find object id from Vending Machine In saveVMDespensingDetails" + err);
 						TxnId.increment("TxnId",function(err, TxnID) {
-							if (err)  console.error("error in persistVMDespensingDetails "+err);
-							//console.log("machine   "+machine+ "=====" + TxnID +"#####"+message.payload.Resource_ID+"&&&&&&&&&"+itemDtls );
+							try{
+							if (err) {
+								log.error("error in persistVMDespensingDetails "+err);
+							}
+							//log.info("machine   "+machine+ "=====" + TxnID +"#####"+message.payload.Resource_ID+"&&&&&&&&&"+itemDtls );
 	    	                   if(machine.length > 0 && TxnID.next > 0 && itemDtls.length > 0){
 	    	                   
 	    	                  		 var query = Inventory.find({
@@ -194,12 +196,15 @@ var saveVMDespensingDetails  =function(message)
 										'resource_id' : machine[0]._id
 											});
 												query.exec(function(err, inventoryData) {
-												if (err) console.error("Error in Inventory find" + err);
+													try{
+												if (err){
+													log.error("Error in Inventory find" + err);
+												}
 											
 										if(inventoryData.length > 0){
 												var TotalUnit = inventoryData[0].units, 
 												updateValue = TotalUnit - 1, 
-												objectid = inventoryData[0]._id
+												objectid = inventoryData[0]._id;
 											
 										if(updateValue >= 0){
 	    	                   
@@ -211,33 +216,52 @@ var saveVMDespensingDetails  =function(message)
 													 unitprice        : message.payload.Sale_Amount			    
 									   			  })
 										     		.save( function( err, VMDespensingDetails ){
-										     		
-										     		  if (err) {console.log("error in persistVMDespensingDetails "+err)};
-										        
-										            console.log("Data has been persisted For VMDispensing");
-										        
-										       	    updateUnitsOfItem(message);
-										        
+										     			try{
+										     		if (err) {
+										     			log.info("error in persistVMDespensingDetails "+err);
+										     		}
+										            log.info("Data has been persisted For VMDispensing");
+										            updateUnitsOfItem(message);
 										        	if('Coupon_Code'in message.payload)
 										        	{
 										        		updateCouponTxnDetails(TxnID.next,Vmachine,message);
 										        	}
-										        	
+										    }catch(Exception){
+												 log.error("There is problem in Method: saveVMDespensingDetails() Inventory.find "+Exception);
+											}	    	
 									});
 									
-									}else{console.info("There is no item for Dispense")}
+									}else{
+										console.info("There is no item for Dispense");
+									}
 									
-									}else{console.info("There is no item Details for Dispense")}
+									}else{
+										console.info("There is no item Details for Dispense");
+									}
 									
-									
+										}catch(Exception){
+										 log.error("There is problem in Method: saveVMDespensingDetails() Inventory.find "+Exception);
+									    }	
 									});
 									
-	    	                   }else{console.log("machine or TxnID is not available");}     
-		    	        
+	    	                   }else{
+	    	                	   log.info("machine or TxnID is not available");
+	    	                	   }     
+							}catch(Exception){
+								 log.error("There is problem in Method: saveVMDespensingDetails() TxnId.increment "+Exception);
+							 }      
 						});//TxnID
+				}catch(Exception){
+					 log.error("There is problem in Method: saveVMDespensingDetails() Item.getItemID "+Exception);
+				 }
 		 	});//VM
+			 }catch(Exception){
+				 log.error("There is problem in Method: saveVMDespensingDetails() VendingMachine.getMachine "+Exception);
+			 }
 		 });//item
-  }else{console.log("Message is not available");}
+  }else{
+	  log.info("Message is not available");
+	  }
 };
 
 /**
@@ -246,11 +270,17 @@ var saveVMDespensingDetails  =function(message)
 
 var updateCouponTxnDetails = function(txnid,machine,message)
 {
-	console.log("Inside updateCouponTxnDetails")
+	log.info("Inside updateCouponTxnDetails");
 	   Coupon.getIdByCouponCode(message.payload.Coupon_Code, function(err, couponDtls) {
-			if (err) console.log("Error to find object id from getIdByCouponCode" + err);
+		   try{
+			if (err){
+				log.info("Error to find object id from getIdByCouponCode" + err);
+			}
 					Transaction.getIdByTxnId(txnid, function(err, txnDtls) {
-						if (err)console.log("Error to find txnDtls in getIdByTxnId" + err);
+						try{
+						if (err){
+							log.info("Error to find txnDtls in getIdByTxnId" + err);
+						}
 						 
 							if(couponDtls.length > 0 && txnDtls.length > 0){
 								
@@ -261,13 +291,27 @@ var updateCouponTxnDetails = function(txnid,machine,message)
 															resource_region :machine[0].region
 															}},
 															function(err, numberAffected) {
-									if (err)
-										console.log("Error in update updateCouponTxnDetails" + err);
-									    console.log("numberAffected in updateCouponTxnDetails:::" + numberAffected);
+									try{
+									if (err){
+										log.info("Error in update updateCouponTxnDetails" + err);
+									}
+									    log.info("numberAffected in updateCouponTxnDetails:::" + numberAffected);
+									}catch(Exception){
+										 log.error("There is problem in Method: updateCouponTxnDetails() Coupon.update"+Exception);
+									 }
 									});
 									
-							}else{console.log("couponDtls or txnDtls is NULL ")}		
-					});
+							}else{
+								log.info("couponDtls or txnDtls is NULL ");
+							}		
+						}catch(Exception){
+							 log.error("There is problem in Method: updateCouponTxnDetails() Transaction.getIdByTxnId"+Exception);
+						 }
+						});
+					
+		   }catch(Exception){
+				 log.error("There is problem in Method: updateCouponTxnDetails() Coupon.getIdByCouponCode"+Exception);
+			 }
 	 	});
 };
 
@@ -277,13 +321,15 @@ var updateCouponTxnDetails = function(txnid,machine,message)
  * This method is used for update unit of items inventory.
  */
 var updateUnitsOfItem = function(message) {
-	console.log("inside updateUnitOfItem()");
+	log.info("inside updateUnitOfItem()");
 	var updateValue;
 	var objectid;
 	var itemStatus;
 	
 	VendingMachine.getMachine(message.payload.Resource_ID, function(err, machine) {
+		try{
 		 Item.getItemID(message.payload.Product_Name, function(err, itemDtls) {
+			 try{
 			  if(machine.length > 0 && itemDtls.length > 0){
 	
 						var query = Inventory.find({
@@ -291,12 +337,15 @@ var updateUnitsOfItem = function(message) {
 							'resource_id' : machine[0]._id
 						});
 						query.exec(function(err, inventoryData) {
-									if (err) console.error("Error in Inventory find" + err);
+							try{
+									if (err) {
+										log.error("Error in Inventory find" + err);
+									}
 									if(inventoryData.length > 0){
 											var TotalUnit = inventoryData[0].units, 
 											updateValue = TotalUnit - 1, 
-											objectid = inventoryData[0]._id
-											//console.log(objectid+ " ======  "+inventoryData[0].units +"====== "+ inventoryData[0].reorderlevel)
+											objectid = inventoryData[0]._id;
+											//log.info(objectid+ " ======  "+inventoryData[0].units +"====== "+ inventoryData[0].reorderlevel)
 											if(updateValue >= 0){
 												
 												if (updateValue <= inventoryData[0].reorderlevel || updateValue == 0) 
@@ -307,33 +356,48 @@ var updateUnitsOfItem = function(message) {
 												
 												if(updateValue == 0)
 												{
-													console.log("1")
+													log.info("1");
 										          	itemStatus = config.itemstatusout;
 													privateForupdateUnitsOfItem (itemStatus, objectid, updateValue, machine[0]._id);
 													
 													
 												} else if(updateValue < inventoryData[0].reorderlevel ){
-												     console.log("2")
+												     log.info("2");
 													 itemStatus = config.itemstatusbelowreorder;
 												     privateForupdateUnitsOfItem (itemStatus, objectid, updateValue, machine[0]._id);
 												     
 												}else if(updateValue == inventoryData[0].reorderlevel ){
-														console.log("3")
+														log.info("3");
 														itemStatus = config.itemstatusreorder;
 														privateForupdateUnitsOfItem (itemStatus, objectid,updateValue, machine[0]._id);
 														//saveStockOutHistory(inventoryData,updateValue,message);
 												}else if(updateValue > inventoryData[0].reorderlevel ){
-													console.log("4")
+													log.info("4");
 													itemStatus = config.itemstatusok ;
 													privateForupdateUnitsOfItem (itemStatus, objectid, updateValue, machine[0]._id);
 												}
 											
-													console.log("status     "+itemStatus)
-										}else{console.info("No items for dispense" )}
-									}else{console.log("Inventory data found NULL for resourceId "+message.payload.Resource_ID +" and product name "+ message.payload.Product_Name + "in updateUnitsOfItem() " )}
-						});
-			  }else{console.log('Machine or Item details length is zero updateUnitsOfItem()')}
+													log.info("status     "+itemStatus);
+										}else{
+											console.info("No items for dispense" );
+											}
+									}else{
+										log.info("Inventory data found NULL for resourceId "+message.payload.Resource_ID +" and product name "+ message.payload.Product_Name + "in updateUnitsOfItem() " );
+										}
+							}catch(Exception){
+								 log.error("There is problem in Method: updateUnitsOfItem() Inventory.find Query "+Exception);
+							 }
+							});
+			  }else{
+				  log.info('Machine or Item details length is zero updateUnitsOfItem()');
+				  }
+			 }catch(Exception){
+				 log.error("There is problem in Method: updateUnitsOfItem() Item.getItemID "+Exception);
+			 }	  
 		 });
+		}catch(Exception){
+			 log.error("There is problem in Method: updateUnitsOfItem() VendingMachine.getMachine "+Exception);
+		 }
 	 });
 
 };
@@ -344,10 +408,10 @@ var updateUnitsOfItem = function(message) {
 
 var privateForupdateUnitsOfItem = function(itemStatus, objectid, updateValue, resource_id)
 {
-	//console.log("888888888888888888888888888888888888888888 "+objectid+"==================="+resource_id + "================"+itemStatus );
-	console.log("Inside privateForupdateUnitsOfItem()");
+	//log.info(" "+objectid+"=="+resource_id + "=="+itemStatus );
+	log.info("Inside privateForupdateUnitsOfItem()");
 	//InventoryStatus.getStatusIdByName(itemStatus, function(err, inventoryStatusDtls) {
-			//if (err) console.log("Error to find object id from getStatusIdByName" + err);
+			//if (err) log.info("Error to find object id from getStatusIdByName" + err);
 			
 			
 					Inventory.update({_id : objectid}, {$set : {
@@ -355,10 +419,15 @@ var privateForupdateUnitsOfItem = function(itemStatus, objectid, updateValue, re
 											 status :itemStatus //inventoryStatusDtls[0].status
 											}
 											}, function(err, numberAffected) {
-												if (err)
-													console.log("Error in privateForupdateUnitsOfItem() units" + err);
-												    console.log("numberAffected:::" + numberAffected);
+												try{
+												if (err){
+													log.info("Error in privateForupdateUnitsOfItem() units" + err);
+												}
+												    log.info("numberAffected:::" + numberAffected);
 												    getStatusPriorityAndUpadteVM(objectid, itemStatus, resource_id);
+												}catch(Exception){
+													 log.error("There is problem in Method: privateForupdateUnitsOfItem() Inventory.update "+Exception);
+												}
 											});
 									//});	
 	};
@@ -367,28 +436,29 @@ var privateForupdateUnitsOfItem = function(itemStatus, objectid, updateValue, re
  * This method is used for keep track out of stock history for each item.
  */
 var saveStockOutHistory = function(inventoryData,updateValue,message) {
-	console.log("Enter into Stock Out of History" );
+	try{
+	log.info("Enter into Stock Out of History" );
 	
 	if(message != null){
 		var itemStatus;
 		if(updateValue == 0)
 			{
-			 console.log("11")
+			 log.info("11");
 	          		itemStatus = config.itemstatusout;
 			 		privateForsaveStockOutHistory(inventoryData,updateValue,message,itemStatus);
 	          		swarmservice.saveAlert(message,itemStatus);
 	          		
 			}
 		else if(updateValue < inventoryData[0].reorderlevel ){
-			console.log("22")
+			log.info("22");
 			itemStatus = config.itemstatusbelowreorder;
-			console.log("22   "+itemStatus)
+			log.info("22   "+itemStatus);
 			privateForsaveStockOutHistory(inventoryData,updateValue,message,itemStatus);
 			swarmservice.saveAlert(message,itemStatus);
 			
 		}
 		else if(updateValue == inventoryData[0].reorderlevel ){
-			console.log("33")
+			log.info("33");
 			itemStatus = config.itemstatusreorder;
 			privateForsaveStockOutHistory(inventoryData,updateValue,message,itemStatus);
 			swarmservice.saveAlert(message,itemStatus);
@@ -396,7 +466,12 @@ var saveStockOutHistory = function(inventoryData,updateValue,message) {
 			
 			
 		}
-	}else{console.log('Message is NULL for saveStockOutHistory()');}
+	}else{
+		log.info('Message is NULL for saveStockOutHistory()');
+		}
+	}catch(Exception){
+		 log.error("There is problem in Method: saveStockOutHistory() "+Exception);
+	}
 };
 
 
@@ -406,13 +481,12 @@ var saveStockOutHistory = function(inventoryData,updateValue,message) {
 
 var privateForsaveStockOutHistory = function(inventoryData,updateValue,message,itemStatus)
 {
- console.log("inside privateForsaveStockOutHistory ")
+ log.info("inside privateForsaveStockOutHistory ");
 	 VendingMachine.getMachine(message.payload.Resource_ID, function(err, machine) {
+		 try{
 		 Item.getItemID(message.payload.Product_Name, function(err, itemDtls) {
-			 //InventoryStatus.getStatusIdByName(itemStatus, function(err, inventoryStatusDtls) {
-				 // if (err) console.log("Error to find object id from getStatusIdByName" + err);
-			 // if(machine.length > 0 && itemDtls.length > 0){
-			 if(machine.length > 0 ){
+			 try{
+			  if(machine.length > 0 ){
 			
 					    new StockOutHistory({
 						time : Date.now(),
@@ -423,18 +497,25 @@ var privateForsaveStockOutHistory = function(inventoryData,updateValue,message,i
 						itemid : message.payload.Product_Name
 					})
 							.save(function(err, StockOutHistory) {
-								if (err)
-											console
-													.log(" Error in saveStockOutHistory   "
-															+ err),
-
-											console
-													.log("Data has been persisted For saveStockOutHistory");
-											
+								try{
+								if (err){
+									console.log(" Error in saveStockOutHistory   "+ err);
+								}
+								console.log("Data has been persisted For saveStockOutHistory");
+								}catch(Exception){
+									log.error("There is problem in Method: privateForsaveStockOutHistory() StockOutHistory.Save "+Exception);
+								}
 							});
-			  }else{console.log('Machine or Item details length is zero saveStockOutHistory()')}
-		//    });//Inventory
+			  }else{
+				  log.info('Machine or Item details length is zero saveStockOutHistory()');
+				  }
+			 }catch(Exception){
+				 log.error("There is problem in Method: privateForsaveStockOutHistory() Item.getItemID "+Exception);
+			 }
 		 });//Item
+		 }catch(Exception){
+			 log.error("There is problem in Method: privateForsaveStockOutHistory() VendingMachine.getMachine "+Exception);
+		 }
 	 });//VM
 
 	
@@ -450,71 +531,80 @@ var privateForsaveStockOutHistory = function(inventoryData,updateValue,message,i
 */	   
 module.exports.saveAlert = function(data,configName)
 {
-	console.log("Inside save Alert  "+configName);
+	try{
+	log.info("Inside save Alert  "+configName);
 	
 	if(data != null && configName.length > 0 )
 	{
 	
-		var resourceId
+		var resourceId;
 	    if(configName == config.vmstatusavailable)
   		{
-	    	console.log("-1");
+	    	log.info("-1");
   			resourceId = data.from.resource;
   			alertHandler(data,resourceId,configName);
   			ticketserviceMgmt.removeTicketDetails(resourceId,configName);//TicketMgmt
   		}
 		else if(configName == config.vmstatusunavailable)
   		{
-			console.log("-2");
+			log.info("-2");
   			resourceId = data.from.resource;
   			alertHandler(data,resourceId,configName);
   			ticketserviceMgmt.addTicketDetails(resourceId,configName);//TicketMgmt
   		}else if('Error_Type' in data.payload)
 	  		{
   			 
-  				console.log("-3");
+  				log.info("-3");
   				
   				if(data.payload.Status == config.vmstatusavailable)
   				{
-  					console.log("-4");
+  					log.info("-4");
   					 resourceId = data.payload.Resource_ID;
   					 ticketserviceMgmt.removeTicketDetails(resourceId,configName);//TicketMgmt
   				     alertHandler(data,resourceId,data.payload.Status);
   				}
   				else{
-  					 console.log("-5");
+  					 log.info("-5");
   					 resourceId = data.payload.Resource_ID;
   				     ticketserviceMgmt.addTicketDetails(resourceId,data.payload.Error_Type);//TicketMgmt
   				     alertHandler(data,resourceId,data.payload.Status);
   				}
 	  		}else{
-	  			console.log("-6");
+	  			log.info("-6");
 	  			resourceId = data.payload.Resource_ID;
 	  			alertHandler(data,resourceId,configName);
 	  		}
 	        
-	}else{console.log("Data or configName is not available ")}
-	
+	}else{
+		log.info("Data or configName is not available ");
+		}
+	}catch(Exception){
+		log.error("There is problem in Method: saveAlert() "+Exception);
+	}
 	};
 	
 	
 	var alertHandler = function(data,resourceId,statusName)
 	{
-		console.log("Inside Alert Handler " +statusName)
+		try{
+		log.info("Inside Alert Handler " +statusName);
 		if(statusName == config.vmstatusavailable || statusName == config.vmstatusunavailable )
 		 {
 			 updateVendingMachine(data,resourceId,statusName);
 		 	 saveStatusHistory(data,statusName);
-		 	 privateForSaveAlert(data,resourceId,statusName)
+		 	 privateForSaveAlert(data,resourceId,statusName);
 		 }else if(statusName == config.vmstatuserror)
 		 {  
 			  updateVendingMachine(data,resourceId,data.payload.Error_Type);
 	 	      saveStatusHistory(data,data.payload.Error_Type);
 	 	      privateForSaveAlert (data,resourceId,data.payload.Error_Type);
 		}else{//--Which is use for inventory status
-				 // updateVendingMachine(data,statusName);
-	 	      	//saveStatusHistory(data,statusName);
+			 // updateVendingMachine(data,statusName);
+	 	      //saveStatusHistory(data,statusName);
 	 	      privateForSaveAlert(data,resourceId,statusName);
+		}
+		}catch(Exception){
+			log.error("There is problem in Method: alertHandler() "+Exception);
 		}
 	};
 	
@@ -525,16 +615,19 @@ module.exports.saveAlert = function(data,configName)
 var privateForSaveAlert = function(data,resourceId,statusName)
 {
 	 
-  console.log("inside privateForSaveAlert" +statusName );
-  console.log("----privateForSaveAlert--------"+resourceId +"============  "+statusName )
+  log.info("inside privateForSaveAlert" +statusName );
+  log.info("----privateForSaveAlert--------"+resourceId +"============  "+statusName );
   VendingMachine.getMachine(resourceId, function(err, machine) {
+	  try{
 	  if(machine.length > 0){
 	     InventoryStatus.getStatusIdByName1(statusName, function(err, InventoryStatus) {
+	    	 try{
 		  if(InventoryStatus.length > 0){
-		      console.log("GEt Status Id By NAme     "+InventoryStatus)
+		      log.info("GEt Status Id By NAme     "+InventoryStatus);
 		       AlertConfig.getAlertConfigNameById(InventoryStatus[0]._id, function(err, alertConfig) {
+		    	   try{
 	             if(alertConfig.length > 0){
-			         //console.log("Alert config data   "+alertConfig);
+			         //log.info("Alert config data   "+alertConfig);
 				 new Alert({
 					
 					name :  statusName,
@@ -543,18 +636,36 @@ var privateForSaveAlert = function(data,resourceId,statusName)
 					resource_id : machine[0]._id
 					
 				}).save(function(err, saveAlert) {
-					if (err)
-						console.log(" Error in saveAlert   " + err);
-
-					 console.log("Data has been persisted For saveAlert");
-					
-					   alert.sendAlert(data,statusName);
+					try{
+					if (err){
+						log.info(" Error in saveAlert   " + err);
+					}
+						log.info("Data has been persisted For saveAlert");
+					    alert.sendAlert(data,statusName);
+					}catch(Exception){
+						 log.error("There is problem in Method: privateForSaveAlert() Alert.Save "+Exception);
+					}
 				});
-		  }else{console.log("There is no config data")}
+		  }else{
+			  log.info("There is no config data");
+			  }
+		    	   }catch(Exception){
+		    		   log.error("There is problem in Method: privateForSaveAlert() AlertConfig.getAlertConfigNameById "+Exception);
+		    	   }
 	  		});//Config
-		}else {console.log("There is no status")}
+		}else {
+			log.info("There is no status");
+			}
+	    	 }catch(Exception){
+				 log.error("There is problem in Method: privateForSaveAlert() InventoryStatus.getStatusIdByName1 "+Exception);
+			 }
   		});//InventoryStatus
-	  }else{console.log("There is no machine for resourceid "+resourceId);}
+	  }else{
+		  log.info("There is no machine for resourceid "+resourceId);
+		  }
+	  }catch(Exception){
+			 log.error("There is problem in Method: privateForSaveAlert() VendingMachine.getMachine "+Exception);
+		 }
 	});//VM
 };
 	
@@ -564,10 +675,10 @@ var privateForSaveAlert = function(data,resourceId,statusName)
  */
 	
 var saveAndUpdateInventory = function(message){
-	console.log(" Inside saveAndUpdateInventory() "+ message.payload.Product_Name);
+	log.info(" Inside saveAndUpdateInventory() "+ message.payload.Product_Name);
 	
 	var now = new Date(); 
-		//console.log(now);
+		//log.info(now);
 		
 		
 		var WhichQuarter = Math.floor((now.getMonth() / 3));	 
@@ -576,23 +687,20 @@ var saveAndUpdateInventory = function(message){
 	if(message != null){
 		
 		 VendingMachine.getMachine(message.payload.Resource_ID, function(err, machine) {
+			 try{
 			 Item.getItemID(message.payload.Product_Name, function(err, itemDtls) {
-				 //console.log("ItemDetails    "+itemDtls);
 				 try{
 			  if(itemDtls.length > 0){	 
-			        // console.log("Item and resource   "+itemDtls[0]._id+ "      " +machine[0]._id);
+			        // log.info("Item and resource   "+itemDtls[0]._id+ "      " +machine[0]._id);
 				     Inventory.getInventoryDtlByItemAndResorce(itemDtls[0]._id,machine[0]._id, function(err, inventoryDtls) {
 				  
-					  //console.log("inventoryDtls        "+inventoryDtls)
+					  //log.info("inventoryDtls        "+inventoryDtls)
 					  InventoryStatus.getStatusIdByName(config.itemstatusok, function(err, inventoryStatusDtls) {
-						 
+						  try{
 				  if(machine.length > 0 && itemDtls.length > 0){
-					  
 					     saveReplenshimentHistory(message);
-					  
 					   if(inventoryDtls.length > 0)
 						   {
-						      
 						      updateInventory(inventoryDtls,message.payload.Units_Replenished,machine[0]._id);
 						   }
 						   else{
@@ -602,41 +710,58 @@ var saveAndUpdateInventory = function(message){
 										units : message.payload.Units_Replenished,
 										status :config.itemstatusok
 									}).save(function(err, updateInventory) {
-										if (err)
-											console.log(" Error in saveAndUpdateInventory()   " + err);
-										    
-										    console.log("Data has been persisted For saveAndUpdateInventory()");
-										    
-										    
-										new Goal({
+										try{
+										if (err){
+											log.info(" Error in saveAndUpdateInventory()   " + err);
+										}
+										    log.info("Data has been persisted For saveAndUpdateInventory()");
+										
+										    new Goal({
 													resource_id : machine[0].name,
 													itemid : itemDtls[0].item,
 													quater :WhichQuarter,
 													goal:40,
 													year :Whichyear
 											}).save(function(err, saveGoal) {
-												if (err)
-													console.log(" Error in saveAndUpdateInventory() for Goal   " + err);
-												    
-												    console.log("Data has been persisted For saveAndUpdateInventory() for Goal");
-								
+												try{
+												if (err){
+													log.info(" Error in saveAndUpdateInventory() for Goal   " + err);
+												}
+												    log.info("Data has been persisted For saveAndUpdateInventory() for Goal");
+												}catch(Exception){
+													log.error("There is problem in Method: saveAndUpdateInventory()   Goal.Save "+Exception);	
+												}
 									});//Goal
+										}catch(Exception){
+											 log.error("There is problem in Method: saveAndUpdateInventory()   Inventory.Save "+Exception);
+										 }
 								});
 						   }//else 
-				  }else{console.log('Machine or Item details length is zero saveAndUpdateInventory()')}
+				  }else{
+					  log.info('Machine or Item details length is zero saveAndUpdateInventory()');
+				  }
+						  }catch(Exception){
+								 log.error("There is problem in Method: saveAndUpdateInventory()   InventoryStatus.getStatusIdByName "+Exception);
+							 }
 				}); 
 				
 			 });
 				  
-			  }else{console.log('There is no items which kept into VM');}
-			  }catch(e)
-				  {
-				    console.error("There is problem in saveAndUpdateInventory()"+e);
-				  } 
+			  }else{
+				  log.info('There is no items which kept into VM');
+				  }
+			 	 }catch(Exception){
+					 log.error("There is problem in Method: saveAndUpdateInventory()  Item.getItemID "+Exception);
+				 }
 		 });
+			 }catch(Exception){
+				 log.error("There is problem in Method: saveAndUpdateInventory() VendingMachine.getMachine "+Exception);
+			 }
 		 });	
 		
-	}else{console.log('Message is NULL for saveAnd intdateInventory()');}
+	}else{
+		log.info('Message is NULL for saveAnd intdateInventory()');
+	}
 };
 
 /**
@@ -645,8 +770,9 @@ var saveAndUpdateInventory = function(message){
 
 var updateInventory = function(inventoryDtls,units,machineId)
 {
-	console.log('Inside updateInventory() '+inventoryDtls);
-	var vstatus
+	try{
+	log.info('Inside updateInventory() '+inventoryDtls);
+	var vstatus;
 		if(inventoryDtls[0].reorderlevel > units)
 		{
 				 InventoryStatus.getStatusIdByName(config.itemstatusbelowreorder, function(err, inventoryStatusDtls) {
@@ -680,7 +806,9 @@ var updateInventory = function(inventoryDtls,units,machineId)
 				
 				});
 			}
-	        
+	}catch(Exception){
+		 log.error("There is problem in Method: updateInventory() "+Exception);
+	 }
 	};
 	
 /**
@@ -689,65 +817,66 @@ var updateInventory = function(inventoryDtls,units,machineId)
 	
 var getStatusPriorityAndUpadteVM = function(resource_id, vstatus, machineId)
 {
-	var priorityInvtStatus
-	var priorityVstatus
-	
-	
-	console.log("Inside updateVMByInventoryStatus() ");
+	var priorityInvtStatus;
+	var priorityVstatus;
+	log.info("Inside updateVMByInventoryStatus() ");
 	VendingMachine.getInventoryStatusById(machineId,function(err,VMDetails){
-		console.log(vstatus+"             ========================= "+resource_id+"=================="  +VMDetails)
+		try{
+		log.info(vstatus+"== "+resource_id+"=="  +VMDetails);
 		
 		if(VMDetails[0].inventory_status == config.itemstatusok)
 		{
-			console.log("1");
+			log.info("1");
 			priorityInvtStatus = parseInt(config.priorityok);
 			
 		}else if(VMDetails[0].inventory_status == config.itemstatusbelowreorder)
 			
 		{
-			console.log("2===========");
+			log.info("2===========");
 			priorityInvtStatus = parseInt(config.prioritybelowreorder);
 			
 		}else if(VMDetails[0].inventory_status == config.itemstatusreorder)
 		{
-			console.log("3");
+			log.info("3");
 			priorityInvtStatus = parseInt(config.priorityreorder);
 			
 		}else if(VMDetails[0].inventory_status == config.itemstatusout)
 			
 		{
-			console.log("4");
+			log.info("4");
 			priorityInvtStatus = parseInt(config.priorityout);
 		}
 		
 	    
 		if(vstatus == config.itemstatusok)
 		{
-			console.log("5");
+			log.info("5");
 			priorityVstatus = parseInt(config.priorityok);
 			
 		}else if(vstatus == config.itemstatusbelowreorder)
 		{
-			console.log("6");
+			log.info("6");
 			priorityVstatus = parseInt(config.prioritybelowreorder);
 			
 		}else if(vstatus == config.itemstatusreorder)
 		{
-			console.log("7");
+			log.info("7");
 			priorityVstatus = parseInt(config.priorityreorder);
 			
 		}else if(vstatus == config.itemstatusout)
 		{
-			console.log("8");
+			log.info("8");
 			priorityVstatus = parseInt(config.priorityout);
 		}
 		
 		if(priorityVstatus >= priorityInvtStatus )
 		{
-			console.log("9");
-			updateVMByInventoryStatus(VMDetails[0]._id,vstatus)
+			log.info("9");
+			updateVMByInventoryStatus(VMDetails[0]._id,vstatus);
 		}
-	
+		}catch(Exception){
+			 log.error("There is problem in Method: getStatusPriorityAndUpadteVM() "+Exception);
+		 }
 	});
 	
 };
@@ -758,27 +887,37 @@ var getStatusPriorityAndUpadteVM = function(resource_id, vstatus, machineId)
 
 var updateVMByInventoryStatus = function(resourceId,vstatus)
 {
-	console.log("Inside updateVMByInventoryStatus() ");
+	log.info("Inside updateVMByInventoryStatus() ");
 	
 	VendingMachine.update({_id : resourceId}, {$set : {inventory_status : vstatus , InventoryStatus_time:Date.now()}
 	}, function(err, numberAffected) {
-		if (err)
-			console.log("Error in update updateVMByInventoryStatus" + err);
-		    console.log("numberAffected in updateVMByInventoryStatus " + numberAffected);
+		try{
+		if (err){
+			log.info("Error in update updateVMByInventoryStatus" + err);
+		}
+		    log.info("numberAffected in updateVMByInventoryStatus " + numberAffected);
+		}catch(Exception){
+			 log.error("There is problem in Method: updateVMByInventoryStatus() "+Exception);
+		}
 	 });	
-	}
+	};
 
 /**
  * 
  */
 var privateForUpdateInventory = function(inventoryDtls,units,vstatus)
 {
-	console.log("inside privateForUpdateInventory() "+inventoryDtls + units +  vstatus)
+	log.info("inside privateForUpdateInventory() "+inventoryDtls + units +  vstatus);
 	Inventory.update({_id : inventoryDtls[0]._id}, {$set : {units : units,status : vstatus}
 	}, function(err, numberAffected) {
-		if (err)
-			console.log("Error in update updateInventoryWithStatus" + err);
-		    console.log("numberAffected in updateInventoryWithStatus " + numberAffected);
+		try{
+		if (err){
+			log.info("Error in update updateInventoryWithStatus" + err);
+		}
+		    log.info("numberAffected in updateInventoryWithStatus " + numberAffected);
+		}catch(Exception){
+			 log.error("There is problem in Method: privateForUpdateInventory() "+Exception);
+		 }
 	 });
 	
 	};
@@ -788,11 +927,13 @@ var privateForUpdateInventory = function(inventoryDtls,units,vstatus)
  * item.
  */
 var saveReplenshimentHistory = function(message) {
-	console.log(" Inside saveReplenshimentHistory() ");
+	log.info(" Inside saveReplenshimentHistory() ");
 		if(message != null){
 		
 			VendingMachine.getMachine(message.payload.Resource_ID, function(err, machine) {
+				try{
 				Item.getItemID(message.payload.Product_Name, function(err, itemDtls) {
+					try{
 					if(machine.length > 0 && itemDtls.length > 0){
 								new ReplenishmentHistory({
 									units :  message.payload.Units_Replenished,
@@ -800,40 +941,32 @@ var saveReplenshimentHistory = function(message) {
 									resource_id : machine[0]._id,
 									itemid : message.payload.Product_Name
 								}).save(function(err, ReplenishmentHistory) {
-									if (err)
-										console.log(" Error in ReplenishmentHistory   " + err);
+									try{
+									if (err){
+										log.info(" Error in ReplenishmentHistory   " + err);
+									}
 						
-							console.log("Data has been persisted For ReplenishmentHistory");
+							log.info("Data has been persisted For ReplenishmentHistory");
 							updateVMByInventoryStatus(machine[0]._id,config.itemstatusok);
-						
+									}catch(Exception){
+										 log.error("There is problem in Method: saveReplenshimentHistory() ReplenishmentHistory.Save "+Exception);
+									 }
 						});
-				  }else{console.log('Machine or Item details length is zero for ReplenishmentHistory()')}
+				  }else{
+					  log.info('Machine or Item details length is zero for ReplenishmentHistory()');
+				  }
+					}catch(Exception){
+						 log.error("There is problem in Method: saveReplenshimentHistory() Item.getItemID "+Exception);
+					 }				
 			 });
+				}catch(Exception){
+					 log.error("There is problem in Method: saveReplenshimentHistory() VendingMachine.getMachine "+Exception);
+				 }				
 		 });
-	}else{console.log('Message is NULL for ReplenishmentHistory()');}
+	}else{
+		log.info('Message is NULL for ReplenishmentHistory()');
+		}
 };
-
-/**
- * This method is used for u for update vending machine with items
- * 
- */
-/*var updateVendingMachineDetails = function(resourecId,items) {
-	var objectId;
-    console.log(" inside update VMDetails  ");
-    	VendingMachineDetail.getMachine(resourecId, function(err, data) {
-		if (err)
-			console.log("Error to find object id from Vending Machine" + err);
-	         objectid = data[0]._id
-		
-	         VendingMachineDetail.update({_id : objectid}, {$set : {items : items}
-	}, function(err, numberAffected) {
-		if (err)
-			console.log("Error in update updateVMDetails" + err);
-		    console.log("numberAffected in updateVMDetails " + numberAffected);
-	 });
-	});
-};*/
-
 
 /**
  * 
@@ -841,8 +974,9 @@ var saveReplenshimentHistory = function(message) {
 
 var updateVendingMachine =  function(data,resourceId,statusName)
 {
-	console.log(" inside update Vending Machine   "+statusName );
-	var resourceId
+	try{
+	log.info(" inside update Vending Machine   "+statusName );
+	var resourceId;
 	if(statusName == config.vmstatusavailable)
 	{
 		//resourceId = data.from.resource;
@@ -862,7 +996,9 @@ var updateVendingMachine =  function(data,resourceId,statusName)
 		 // resourceId = data.payload.Resource_ID;
 		  privateForupdateVendingMachine(resourceId, data.payload.Error_Type);
 		  }
-	    
+	}catch(Exception){
+		 log.error("There is problem in Method: updateVendingMachine() "+Exception);
+	 }
 	};
 
 /**
@@ -870,18 +1006,30 @@ var updateVendingMachine =  function(data,resourceId,statusName)
  */
 var privateForupdateVendingMachine = function(resourceId, statusName)
 {
-  console.log("Inside privateForupadteVendingMachine "+resourceId+ "================="+ statusName)
+  log.info("Inside privateForupadteVendingMachine");
 	 VendingMachine.getMachine(resourceId, function(err, machine) {
-	    	if (err)
-				console.log("Error to find object id from Vending Machine" + err);
+		 try{
+	    	if (err){
+	    		log.info("Error to find object id from Vending Machine" + err);
+	    	}
 		       	if(machine.length > 0){
 					VendingMachine.update({_id : machine[0]._id}, {$set : {status : statusName,VMStatus_time:Date.now()}
 						}, function(err, numberAffected) {
-							if (err)
-								console.log("Error in update upadteVendingMachine()" + err);
-							    console.log("number Affected in upadteVendingMachine() " + numberAffected);
+							try{
+							if (err){
+								log.info("Error in update upadteVendingMachine()" + err);
+							}
+							    log.info("number Affected in upadteVendingMachine() " + numberAffected);
+							}catch(Exception){
+								 log.error("There is problem in Method: privateForupdateVendingMachine() VendingMachine.update "+Exception);
+							 }
 						 });
-		       	}else{ console.log("There is no data for resource: " + resourceId);}
+		       	}else{ 
+		       		log.info("There is no data for resource: " + resourceId);
+		       		}
+		 }catch(Exception){
+			 log.error("There is problem in Method: privateForupdateVendingMachine() "+Exception);
+		 }
 	    });
  };
 	
@@ -892,13 +1040,13 @@ var privateForupdateVendingMachine = function(resourceId, statusName)
 	
 var saveStatusHistory =  function(data,statusName)
 {
-	console.log(" inside SaveStatusHistory()"   );
-	var resourceId
-	var errorCode
+	try{
+	log.info("inside SaveStatusHistory()");
+	var resourceId;
+	var errorCode;
 	if(data != null && statusName.length > 0 )
 	{
-	
-		var resourceId
+		var resourceId;
 		if(statusName == config.vmstatusavailable)
   		{
   			resourceId = data.from.resource;
@@ -917,10 +1065,12 @@ var saveStatusHistory =  function(data,statusName)
 	  			privateForSaveStatusHistory(resourceId,statusName);
 	  		}
 	        
-	}else{console.log("Data or configName is not available ")}
-	
-			
-
+	}else{
+		log.info("Data or configName is not available ");
+		}
+	}catch(Exception){
+		 log.error("There is problem in Method: saveStatusHistory() "+Exception);
+	 }
 	};
 	
 /** 
@@ -929,13 +1079,17 @@ var saveStatusHistory =  function(data,statusName)
 	
 var privateForSaveStatusHistory = function(resourceId, statusName)
 {
-	console.log("Inside privateForSaveStatusHistory");
+	log.info("Inside privateForSaveStatusHistory");
 	VendingMachine.getMachine(resourceId, function(err, machine) {
-		if (err)
-			console.log("Error to find object id from Vending Machine" + err);
+		try{
+		if (err){
+			log.info("Error to find object id from Vending Machine" + err);
+		}
 				VMStatus.getStatusIdByName(statusName, function(err, statusDtls) {
-				  if (err)
-					console.log("Error to find object id from status" + err);
+					try{
+				  if (err){
+					  log.info("Error to find object id from status" + err);
+				  }
 				       if(machine.length > 0 && statusDtls.length > 0){
 							new StatusHistory({
 								errorcode       :statusName,
@@ -944,14 +1098,25 @@ var privateForSaveStatusHistory = function(resourceId, statusName)
 								status_id		:statusDtls[0]._id
 								
 								}).save(function(err, updateInventory) {
-								if (err)
+									try{
+								if (err){
 									console(" Error in newCouponEntery   " + err);
-						
-									console.log("Data has been persisted For saveStatusHistory");
+								}
+									log.info("Data has been persisted For saveStatusHistory");
+									}catch(Exception){
+										 log.error("There is problem in Method: privateForSaveStatusHistory() StatusHistory.save "+Exception);
+									 }
 								});
-				     }else{console.log("There is no data for resource "+resourceId)}
+				     }else{
+				    	 log.info("There is no data for resource "+resourceId);
+				     }
+					}catch(Exception){
+						 log.error("There is problem in Method: privateForSaveStatusHistory() VMStatus.getStatusIdByName "+Exception);
+					 }
 		});
-			
+		}catch(Exception){
+			 log.error("There is problem in Method: privateForSaveStatusHistory() VendingMachine.getMachine "+Exception);
+		 }
 	});
 	
 	};

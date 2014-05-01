@@ -31,6 +31,7 @@ class CleanUpScript(object):
         self.insertIntoDBTables()   #inserting static values in tables
 
     def resourceList(self,hostname, api_key, swarm_id):
+        resource_id = ''
         conn = httplib.HTTPConnection(hostname)
         conn.request("GET", "/swarms/%s"%(swarm_id), None, {"x-bugswarmapikey":api_key})
         resp = conn.getresponse()
@@ -38,7 +39,10 @@ class CleanUpScript(object):
         conn.close()
         json_obj = json.loads(txt)
         for resources in json_obj["resources"]:
-            if resources["resource_type"] == "producer":
+            if resources["resource_type"] == "consumer":
+                resource_id = resources["resource_id"]
+        for resources in json_obj["resources"]:
+            if resources["resource_type"] != "consumer" and resources["resource_id"] != resource_id:
                 self.deleteResource(self.hostname, self.api_key_Conf, resources["resource_id"])   #Delete the Resource 
         print "All the resources deleted successfully"        
                 
@@ -87,7 +91,7 @@ class CleanUpScript(object):
         print "Config Files Cleaned Successfully"
         
     def startNodeServer(self):
-        subprocess.Popen(shlex.split('sh startNodeServer.sh'))
+        subprocess.Popen(shlex.split('nohup sh startNodeServer.sh'))
         print "Node Server Started"
         
     def insertIntoDBTables(self):
